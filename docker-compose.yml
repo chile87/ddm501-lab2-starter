@@ -1,0 +1,186 @@
+# =============================================================================
+# Docker Compose for ML Pipeline with MLflow and Airflow
+# DDM501 - Lab 2: ML Pipeline & Experiment Tracking
+#
+# TODO: Complete the service configurations
+# =============================================================================
+
+version: '3.8'
+
+services:
+  # ===========================================================================
+  # MLflow Tracking Server
+  # ===========================================================================
+  # TODO 1: Configure MLflow service
+  # 
+  # Requirements:
+  # - Use image: ghcr.io/mlflow/mlflow:v2.9.2
+  # - Expose port 5000
+  # - Mount ./mlruns to /mlflow/mlruns for artifact storage
+  # - Set environment variables for backend and artifact store
+  # - Command to start server with SQLite backend
+  
+  mlflow:
+    image: ghcr.io/mlflow/mlflow:v2.9.2
+    container_name: mlflow-server
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./mlruns:/mlflow/mlruns
+      - ./mlflow.db:/mlflow/mlflow.db
+    environment:
+      - MLFLOW_TRACKING_URI=http://localhost:5000
+    command: >
+      mlflow server
+      --backend-store-uri sqlite:///mlflow/mlflow.db
+      --default-artifact-root /mlflow/mlruns
+      --host 0.0.0.0
+      --port 5000
+    restart: unless-stopped
+
+  # ===========================================================================
+  # PostgreSQL Database (for Airflow)
+  # ===========================================================================
+  postgres:
+    image: postgres:15-alpine
+    container_name: airflow-postgres
+    environment:
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow
+      POSTGRES_DB: airflow
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "airflow"]
+      interval: 10s
+      retries: 5
+    restart: unless-stopped
+
+  # ===========================================================================
+  # TODO 2: Configure Airflow Webserver
+  # ===========================================================================
+  # Requirements:
+  # - Use image: apache/airflow:2.8.0
+  # - Expose port 8080
+  # - Mount ./dags to /opt/airflow/dags
+  # - Mount ./pipeline to /opt/airflow/pipeline
+  # - Set environment variables for database connection
+  # - Depends on postgres and airflow-init
+  
+  airflow-webserver:
+    image: apache/airflow:2.8.0
+    container_name: airflow-webserver
+    depends_on:
+      postgres:
+        condition: service_healthy
+      airflow-init:
+        condition: service_completed_successfully
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./pipeline:/opt/airflow/pipeline
+      - ./logs:/opt/airflow/logs
+    environment:
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres/airflow
+      - AIRFLOW__CORE__FERNET_KEY=your-fernet-key-here
+      - AIRFLOW__WEBSERVER__SECRET_KEY=your-secret-key-here
+      - AIRFLOW__CORE__LOAD_EXAMPLES=false
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
+    command: webserver
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped
+
+  # ===========================================================================
+  # TODO 3: Configure Airflow Scheduler
+  # ===========================================================================
+  # Requirements:
+  # - Similar to webserver but runs scheduler command
+  # - No port exposure needed
+  # - Same volume mounts and environment variables
+  
+  airflow-scheduler:
+    image: apache/airflow:2.8.0
+    container_name: airflow-scheduler
+    depends_on:
+      postgres:
+        condition: service_healthy
+      airflow-init:
+        condition: service_completed_successfully
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./pipeline:/opt/airflow/pipeline
+      - ./logs:/opt/airflow/logs
+    environment:
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres/airflow
+      - AIRFLOW__CORE__FERNET_KEY=your-fernet-key-here
+      - AIRFLOW__CORE__LOAD_EXAMPLES=false
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
+    command: scheduler
+    restart: unless-stopped
+
+  # ===========================================================================
+  # Airflow Initialization
+  # ===========================================================================
+  airflow-init:
+    image: apache/airflow:2.8.0
+    container_name: airflow-init
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres/airflow
+      - AIRFLOW__CORE__FERNET_KEY=your-fernet-key-here
+    volumes:
+      - ./dags:/opt/airflow/dags
+    command: >
+      bash -c "
+        airflow db init &&
+        airflow users create \
+          --username admin \
+          --password admin \
+          --firstname Admin \
+          --lastname User \
+          --role Admin \
+          --email admin@example.com || true
+      "
+
+  # ===========================================================================
+  # ML Pipeline Application (Optional - for running pipeline)
+  # ===========================================================================
+  # TODO 4: Configure ML Pipeline service (BONUS)
+  # 
+  # This service can be used to run the pipeline manually
+  # or for testing purposes
+  
+  # ml-pipeline:
+  #   build: .
+  #   container_name: ml-pipeline
+  #   volumes:
+  #     - ./pipeline:/app/pipeline
+  #     - ./experiments:/app/experiments
+  #     - ./models:/app/models
+  #   environment:
+  #     - MLFLOW_TRACKING_URI=http://mlflow:5000
+  #   depends_on:
+  #     - mlflow
+  #   command: python -m pipeline.run_pipeline
+
+# =============================================================================
+# Volumes
+# =============================================================================
+volumes:
+  postgres_data:
+
+# =============================================================================
+# Networks (optional - for better isolation)
+# =============================================================================
+# networks:
+#   mlops-network:
+#     driver: bridge

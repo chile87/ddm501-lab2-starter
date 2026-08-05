@@ -79,7 +79,29 @@ EXPERIMENT_CONFIGS = [
 ]
 
 # =============================================================================
+# Model Registry Configuration
+# =============================================================================
+REGISTERED_MODEL_NAME = os.getenv("REGISTERED_MODEL_NAME", "movie-rating-model")
+
+# Metric used to pick the best run, and its optimisation direction.
+REGISTRY_METRIC = "rmse"
+REGISTRY_METRIC_ASCENDING = True  # True => lower is better
+
+# =============================================================================
 # Airflow Configuration
 # =============================================================================
 AIRFLOW_DAG_ID = "movie_rating_training"
-AIRFLOW_SCHEDULE = "@weekly"  # Run weekly
+AIRFLOW_SCHEDULE = "@weekly"  # Run weekly (equivalent cron: '0 0 * * 0')
+
+# Hyperparameters used by the scheduled retraining DAG. Kept here (rather than
+# hard-coded in the DAG) so the DAG stays declarative and the retraining config
+# is versioned in one place.
+AIRFLOW_MODEL_CONFIG = {
+    "model_type": "svd",
+    "n_factors": 100,
+    "n_epochs": 20,
+}
+
+# A retrained model is only promoted to the registry when it beats this RMSE.
+# Acts as a quality gate against silently shipping a degraded model.
+AIRFLOW_RMSE_THRESHOLD = float(os.getenv("AIRFLOW_RMSE_THRESHOLD", "1.0"))

@@ -1,165 +1,327 @@
 # Lab 2: ML Pipeline & Experiment Tracking
 
+> **DDM501 · Lab 2 · 15% of grade**
+> _Building Reproducible ML Pipelines with MLflow and Airflow_
+
 ## Overview
 
-Build reproducible ML pipelines with MLflow experiment tracking and Airflow workflow orchestration for the movie rating prediction system.
+This project transforms the movie rating prediction system (Lab 1) into a **production-ready ML pipeline** with:
 
+- 📊 **MLflow** experiment tracking, model versioning, and Model Registry
+- 🔁 **Apache Airflow** workflow orchestration with weekly retraining
+- 🐳 **Docker Compose** for one-command environment setup
+- 🧪 Modular, tested, reproducible pipeline code
+
+---
 
 ## Project Structure
 
 ```
 ddm501-lab2-starter/
 ├── pipeline/
-│   ├── __init__.py
-│   ├── config.py           # Configuration parameters
-│   ├── data_ingestion.py   # Load and split data
-│   ├── preprocessing.py    # Data preprocessing
-│   ├── training.py         # Model training with MLflow (TODO)
-│   ├── evaluation.py       # Model evaluation (TODO)
-│   └── registry.py         # Model registration (TODO)
+│   ├── config.py           # All configuration in one place
+│   ├── data_ingestion.py   # Load & split MovieLens 100K
+│   ├── preprocessing.py    # Data validation and statistics
+│   ├── training.py         # Model training with full MLflow logging
+│   ├── evaluation.py       # Metrics, plots, evaluation report
+│   ├── registry.py         # MLflow Model Registry management
+│   ├── model_wrapper.py    # pyfunc wrapper for Surprise models
+│   └── run_pipeline.py     # CLI entry-point (end-to-end run)
 ├── dags/
-│   └── ml_training_dag.py  # Airflow DAG (TODO)
+│   └── ml_training_dag.py  # Airflow DAG (7-task pipeline + branching)
 ├── experiments/
-│   └── run_experiments.py  # Hyperparameter tuning (TODO)
+│   └── run_experiments.py  # Hyperparameter sweep + comparison report
 ├── tests/
-│   ├── __init__.py
-│   └── test_pipeline.py    # Pipeline tests
+│   └── test_pipeline.py    # Unit & integration tests
 ├── scripts/
-│   └── setup_mlflow.py     # MLflow setup script
-├── docker-compose.yml      # MLflow + Airflow services (TODO)
+│   └── setup_mlflow.py     # Helper to initialise MLflow server
+├── artifacts/              # Generated charts & reports
+├── models/                 # Saved model pickles
+├── docker-compose.yml      # MLflow + Airflow + PostgreSQL
+├── Dockerfile              # ML pipeline image
+├── Dockerfile.airflow      # Airflow image
 ├── requirements.txt
-└── README.md
+└── experiment_report.md    # Auto-generated experiment comparison report
 ```
+
+---
 
 ## Prerequisites
 
-- Python 3.10+
-- Docker & Docker Compose
-- Lab 1 completed (familiarity with the movie rating model)
+| Tool | Version |
+|------|---------|
+| Python | 3.10+ |
+| Docker & Docker Compose | 24+ |
+| pip | latest |
 
-## Quick Start
+---
 
-### 1. Clone and Setup
+## Quick Start (Local — no Docker)
+
+### 1. Create virtual environment and install dependencies
 
 ```bash
-unzip ddm501-lab2-starter.zip
 cd ddm501-lab2-starter
 
-# Create virtual environment
 python -m venv venv
-source venv/bin/activate  # Linux/Mac
+source venv/bin/activate       # macOS / Linux
+# venv\Scripts\activate        # Windows
 
-# Install dependencies
 pip install -r requirements.txt
 ```
 
-### 2. Start MLflow Server
+### 2. Start MLflow Tracking Server
 
 ```bash
-# Option 1: Simple UI
-mlflow ui --host 0.0.0.0 --port 5000
-
-# Option 2: With backend store
 mlflow server \
   --backend-store-uri sqlite:///mlflow.db \
   --default-artifact-root ./mlruns \
   --host 0.0.0.0 --port 5000
 ```
 
-Access MLflow UI at: http://localhost:5000
+Open MLflow UI at **<http://localhost:5000>**
 
-### 3. Run Pipeline
+### 3. Run a single pipeline pass
 
 ```bash
-# Run complete pipeline
+# Default: SVD with standard hyperparameters
 python -m pipeline.run_pipeline
 
-# Or run individual stages
-python -c "from pipeline.data_ingestion import load_data; load_data()"
+# Custom model and hyperparameters
+python -m pipeline.run_pipeline --model-type nmf --n-factors 50 --n-epochs 30
+
+# Train + register best model to registry
+python -m pipeline.run_pipeline --model-type svd --register
 ```
 
-### 4. Start Airflow (Optional)
+### 4. Run hyperparameter sweep (≥ 9 experiments)
 
 ```bash
-# Initialize Airflow
-airflow db init
-airflow users create --username admin --password admin \
-  --firstname Admin --lastname User --role Admin --email admin@example.com
-
-# Start services (in separate terminals)
-airflow webserver --port 8080
-airflow scheduler
+python -m experiments.run_experiments
 ```
 
-Access Airflow UI at: http://localhost:8080
+This will:
+- Train SVD, NMF, and KNN models with various hyperparameters
+- Log every run to MLflow (params, metrics, artifacts, plots)
+- Auto-generate `experiment_report.md` with comparison table and chart
 
-### 5. Run with Docker
+### 5. Register best model to Production
+
+```bash
+python -c "
+from pipeline.training import setup_mlflow
+from pipeline.registry import register_best_model
+setup_mlflow()
+result = register_best_model(experiment_name='hyperparameter-tuning')
+print(f\"Registered: {result['model_name']} v{result['version']} → {result['stage']}\")
+"
+```
+
+---
+
+## Quick Start (Docker — recommended)
+
+### 1. Configure environment
+
+```bash
+cp .env.example .env
+# Edit .env if you want to change passwords/keys (defaults work for local dev)
+```
+
+### 2. Start all services
 
 ```bash
 docker-compose up -d
 ```
 
-## TODO Tasks
+| Service | URL | Credentials |
+|---------|-----|-------------|
+| MLflow UI | <http://localhost:5000> | — |
+| Airflow UI | <http://localhost:8080> | admin / admin |
 
-Complete the following files:
+### 3. Run ML pipeline inside Docker
 
-- [ ] `pipeline/training.py` - Implement `train_model()` with MLflow logging
-- [ ] `pipeline/evaluation.py` - Implement `evaluate_model()` with metrics
-- [ ] `pipeline/registry.py` - Implement `register_best_model()`
-- [ ] `dags/ml_training_dag.py` - Create Airflow DAG
-- [ ] `experiments/run_experiments.py` - Run hyperparameter experiments
-- [ ] `docker-compose.yml` - Configure MLflow and Airflow services
+```bash
+# Full pipeline
+docker-compose --profile tools run --rm ml-pipeline
 
-## MLflow Tracking
+# Hyperparameter sweep
+docker-compose --profile tools run --rm ml-pipeline \
+  python -m experiments.run_experiments
+```
 
-### Logging Parameters
+### 4. Stop services
+
+```bash
+docker-compose down        # keep data volumes
+docker-compose down -v     # also delete volumes (clean slate)
+```
+
+---
+
+## ML Pipeline Architecture
+
+```
+Data Ingestion → Preprocessing → Training → Evaluation → Model Registry
+     │                │              │           │              │
+  MovieLens        Validate       MLflow      RMSE/MAE      Production
+   100K           Quality        Run Log      + Plots        Stage
+```
+
+### Pipeline stages
+
+| Stage | File | Responsibility |
+|-------|------|---------------|
+| Data Ingestion | `pipeline/data_ingestion.py` | Load MovieLens 100K, train/test split |
+| Preprocessing | `pipeline/preprocessing.py` | Validate data quality, compute stats |
+| Training | `pipeline/training.py` | Train SVD/NMF/KNN, log to MLflow |
+| Evaluation | `pipeline/evaluation.py` | RMSE/MAE/MSE/MAPE, plots, report |
+| Registry | `pipeline/registry.py` | Find best run, register to Production |
+
+---
+
+## MLflow Experiment Tracking
+
+Every training run logs:
+
+**Parameters** (searchable in UI)
 ```python
 mlflow.log_param("model_type", "svd")
 mlflow.log_param("n_factors", 100)
+mlflow.log_param("n_epochs", 20)
+mlflow.log_param("dataset", "ml-100k")
 ```
 
-### Logging Metrics
+**Metrics** (sortable / comparable)
 ```python
-mlflow.log_metric("rmse", 0.95)
-mlflow.log_metric("mae", 0.75)
+mlflow.log_metric("rmse", 0.9348)
+mlflow.log_metric("mae", 0.7377)
+mlflow.log_metric("coverage", 100.0)
+mlflow.log_metric("training_time_seconds", 0.23)
 ```
 
-### Logging Artifacts
-```python
-mlflow.log_artifact("model.pkl")
-mlflow.log_figure(fig, "plot.png")
+**Artifacts**
+- Raw model pickle (`pickle/model_svd.pkl`)
+- Loadable pyfunc model (`model/`) — registered in Model Registry
+- Prediction distribution plot (`plots/prediction_distribution.png`)
+- Error-by-rating boxplot (`plots/error_by_rating.png`)
+- Text evaluation report (`reports/evaluation_report_*.txt`)
+
+---
+
+## Airflow DAG
+
+DAG ID: `movie_rating_training` · Schedule: **@weekly** (every Sunday 00:00)
+
+```
+load_data → preprocess_data → train_model → evaluate_model
+                                                    ↓
+                                          decide_registration
+                                         ↙               ↘
+                                  register_model    skip_registration
+                                         ↘               ↙
+                                              cleanup
 ```
 
-## Experiment Report
+**Quality gate**: the model is only promoted to the registry when `RMSE < 1.0` (configurable via `AIRFLOW_RMSE_THRESHOLD` env var).
 
-Your experiment report should include:
+### Test the DAG locally
 
-1. **Experiment Setup**: Description of models and hyperparameters tested
-2. **Results Table**: Metrics for all experiments
-3. **Analysis**: Which model/parameters performed best and why
-4. **Visualizations**: Charts comparing experiments
-5. **Recommendations**: Selected model for production
+```bash
+export AIRFLOW_HOME=$(pwd)/airflow_home
+airflow db migrate
+airflow dags test movie_rating_training 2024-01-07
+```
+
+---
+
+## Experiment Results
+
+9 experiments were run across 3 model families (SVD, NMF, KNN):
+
+| Rank | Model | Key Params | RMSE | MAE |
+|------|-------|-----------|------|-----|
+| 🥇 1 | SVD | factors=50, epochs=20, lr=0.005 | **0.9348** | 0.7377 |
+| 2 | SVD | factors=100, epochs=20, lr=0.005 | 0.9352 | 0.7375 |
+| 3 | SVD | factors=150, epochs=30, lr=0.01 | 0.9596 | 0.7535 |
+| 4 | SVD | factors=100, epochs=50, lr=0.005 | 0.9667 | 0.7583 |
+| 5 | KNN | k=40, pearson, user-based | 1.0150 | 0.8037 |
+| 6 | KNN | k=40, cosine, user-based | 1.0194 | 0.8038 |
+| 7 | KNN | k=20, cosine, user-based | 1.0284 | 0.8099 |
+| 8 | NMF | factors=50, epochs=50 | 1.0294 | 0.7851 |
+| 9 | NMF | factors=100, epochs=50 | 1.1017 | 0.8394 |
+
+**Conclusion**: SVD consistently outperforms KNN and NMF on MovieLens 100K.
+See [`experiment_report.md`](experiment_report.md) for the full analysis and charts.
+
+---
 
 ## Running Tests
 
 ```bash
+# All tests (unit + integration markers)
 pytest tests/ -v
-pytest tests/ -v --cov=pipeline
+
+# Skip slow tests (no MLflow server needed)
+pytest tests/ -v -m "not slow"
+
+# With coverage report
+pytest tests/ -v --cov=pipeline --cov-report=term-missing
 ```
+
+---
+
+## Configuration Reference
+
+All tunable settings are in [`pipeline/config.py`](pipeline/config.py):
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `MLFLOW_TRACKING_URI` | `http://localhost:5000` | MLflow server URL |
+| `MLFLOW_EXPERIMENT_NAME` | `movie-rating-prediction` | Main experiment name |
+| `DATASET_NAME` | `ml-100k` | Surprise built-in dataset |
+| `TEST_SIZE` | `0.2` | Train/test split ratio |
+| `RANDOM_STATE` | `42` | Global random seed |
+| `AIRFLOW_RMSE_THRESHOLD` | `1.0` | Quality gate for model registration |
+| `REGISTERED_MODEL_NAME` | `movie-rating-model` | Name in Model Registry |
+
+---
 
 ## Grading Rubric
 
-| Criteria | Weight |
-|----------|--------|
-| Pipeline Quality | 35% |
-| Experiment Tracking (MLflow) | 25% |
-| Airflow Automation | 20% |
-| Documentation | 20% |
+| Criteria | Weight | Details |
+|----------|--------|---------|
+| **Pipeline Quality** | 35% | Modular structure (10%) · Reproducible execution (10%) · Error handling (8%) · Code quality (7%) |
+| **Experiment Tracking** | 25% | MLflow setup (8%) · Parameters logged (5%) · Metrics logged (5%) · Artifacts logged (4%) · Model registry (3%) |
+| **Airflow Automation** | 20% | DAG structure (8%) · Tasks execute properly (7%) · Schedule configured (5%) |
+| **Documentation** | 20% | Experiment report (10%) · README complete (5%) · Code documentation (5%) |
 
-## Submission
+---
 
-1. Complete all TODO tasks
-2. Run at least 5 experiments with different configurations
-3. Generate experiment comparison report
-4. Include MLflow UI screenshots
-5. Push to GitHub and submit link
+## Submission Checklist
+
+- [x] Complete ML pipeline with modular stages
+- [x] MLflow tracking configured and running
+- [x] ≥ 5 experiments with different configurations logged
+- [x] Airflow DAG with full task graph and @weekly schedule
+- [x] Experiment comparison report (`experiment_report.md`)
+- [x] Best model registered to Production stage in Model Registry
+- [x] README with setup and usage instructions
+- [ ] Screenshots of MLflow UI showing experiment runs _(add before submitting)_
+- [ ] GitHub repository link submitted
+
+---
+
+## Troubleshooting
+
+**MLflow server not reachable** — the pipeline falls back to a local `file:./mlruns` store automatically, so you can still run experiments without the server.
+
+**Airflow import error in DAG** — make sure the project root is on `PYTHONPATH`:
+```bash
+export PYTHONPATH=$(pwd):$PYTHONPATH
+```
+
+**MovieLens dataset download fails** — set a custom download folder:
+```bash
+export SURPRISE_DATA_FOLDER=~/.surprise_data
+```

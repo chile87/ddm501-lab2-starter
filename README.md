@@ -73,10 +73,14 @@ pip install -r requirements.txt
 ### 2. Start MLflow Tracking Server
 
 ```bash
+# macOS / Linux
 mlflow server \
   --backend-store-uri sqlite:///mlflow.db \
   --default-artifact-root ./mlruns \
   --host 0.0.0.0 --port 5000
+
+# Windows (PowerShell)
+mlflow server --backend-store-uri sqlite:///mlflow.db --default-artifact-root ./mlruns --host 0.0.0.0 --port 5000
 ```
 
 Open MLflow UI at **<http://localhost:5000>**
@@ -116,6 +120,21 @@ result = register_best_model(experiment_name='hyperparameter-tuning')
 print(f\"Registered: {result['model_name']} v{result['version']} → {result['stage']}\")
 "
 ```
+
+---
+
+### 💡 Helper Scripts
+
+For convenience, helper scripts are provided for both Windows PowerShell (`run.ps1`) and Linux/macOS (`Makefile`):
+
+| Command | PowerShell (Windows) | Makefile (Linux/Mac) | Description |
+|---------|-----------------------|----------------------|-------------|
+| Start MLflow Server | `.\run.ps1 mlflow` | `make mlflow` | Starts tracking server on port 5000 |
+| Run Pipeline Pass | `.\run.ps1 train` | `make train` | Runs SVD training pipeline |
+| Run 9 Experiments | `.\run.ps1 sweep` | `make sweep` | Sweeps hyperparameters & auto-generates report |
+| Run Unit Tests | `.\run.ps1 test` | `make test` | Runs pytest test suite |
+| Clean Caches | `.\run.ps1 clean` | `make clean` | Removes cache folders |
+
 
 ---
 
@@ -285,16 +304,6 @@ All tunable settings are in [`pipeline/config.py`](pipeline/config.py):
 | `AIRFLOW_RMSE_THRESHOLD` | `1.0` | Quality gate for model registration |
 | `REGISTERED_MODEL_NAME` | `movie-rating-model` | Name in Model Registry |
 
----
-
-## Grading Rubric
-
-| Criteria | Weight | Details |
-|----------|--------|---------|
-| **Pipeline Quality** | 35% | Modular structure (10%) · Reproducible execution (10%) · Error handling (8%) · Code quality (7%) |
-| **Experiment Tracking** | 25% | MLflow setup (8%) · Parameters logged (5%) · Metrics logged (5%) · Artifacts logged (4%) · Model registry (3%) |
-| **Airflow Automation** | 20% | DAG structure (8%) · Tasks execute properly (7%) · Schedule configured (5%) |
-| **Documentation** | 20% | Experiment report (10%) · README complete (5%) · Code documentation (5%) |
 
 ---
 

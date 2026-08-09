@@ -33,4 +33,4 @@ pytest==7.4.3
 pytest-cov==4.1.0
 
 # Database
-sqlalchemy==2.0.23
+sqlalchemy>=1.4.28,<2.0.0

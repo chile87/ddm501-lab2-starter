@@ -19,9 +19,16 @@ MODELS_DIR.mkdir(exist_ok=True)
 ARTIFACTS_DIR.mkdir(exist_ok=True)
 
 # =============================================================================
-# MLflow Configuration
+# Ports & MLflow Configuration
 # =============================================================================
-MLFLOW_TRACKING_URI = os.getenv("MLFLOW_TRACKING_URI", "http://localhost:5000")
+from pipeline.ports_config import (
+    MLFLOW_PORT,
+    MLFLOW_HOST,
+    MLFLOW_TRACKING_URI,
+    AIRFLOW_PORT,
+    POSTGRES_PORT,
+)
+
 MLFLOW_EXPERIMENT_NAME = os.getenv("MLFLOW_EXPERIMENT_NAME", "movie-rating-prediction")
 
 # =============================================================================

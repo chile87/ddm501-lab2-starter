@@ -10,8 +10,11 @@ help:
 	@echo "  make test    - Run pytest test suite"
 	@echo "  make clean   - Remove cache files"
 
+MLFLOW_HOST ?= 0.0.0.0
+MLFLOW_PORT ?= 5000
+
 mlflow:
-	mlflow server --backend-store-uri sqlite:///mlflow.db --default-artifact-root ./mlruns --host 0.0.0.0 --port 5000
+	mlflow server --backend-store-uri sqlite:///mlflow.db --default-artifact-root ./mlruns --host $(MLFLOW_HOST) --port $(MLFLOW_PORT)
 
 train:
 	python -m pipeline.run_pipeline

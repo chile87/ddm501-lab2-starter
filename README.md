@@ -2,15 +2,30 @@
 
 > **DDM501 · Lab 2 · 15% of grade**
 > _Building Reproducible ML Pipelines with MLflow and Airflow_
+## General Information
 
+**Lecturer**: Huynh Cong Viet Ngu
+
+**Group**: Group 4
+ 
+**Member List**
+ 
+| Full name | MSSV | Role |
+|--------|------|---------|
+| Lê Thị Kim Chi | 25MS23290 | Team lead |
+| Trương Quốc Khánh | 25MS23285 | Member |
+| Trương Sỹ Quảng | 25MS23286 | Member  |
+| Nguyễn Việt Anh Minh | 25MS23275 | Member |
+ 
+---
 ## Overview
 
 This project transforms the movie rating prediction system (Lab 1) into a **production-ready ML pipeline** with:
 
-- 📊 **MLflow** experiment tracking, model versioning, and Model Registry
-- 🔁 **Apache Airflow** workflow orchestration with weekly retraining
-- 🐳 **Docker Compose** for one-command environment setup
-- 🧪 Modular, tested, reproducible pipeline code
+- **MLflow** experiment tracking, model versioning, and Model Registry
+- **Apache Airflow** workflow orchestration with weekly retraining
+- **Docker Compose** for one-command environment setup
+- Modular, tested, reproducible pipeline code
 
 ---
 
@@ -41,7 +56,9 @@ ddm501-lab2-starter/
 ├── Dockerfile              # ML pipeline image
 ├── Dockerfile.airflow      # Airflow image
 ├── requirements.txt
+├── README.md
 └── experiment_report.md    # Auto-generated experiment comparison report
+
 ```
 
 ---
@@ -56,17 +73,19 @@ ddm501-lab2-starter/
 
 ---
 
-## Quick Start (Local — no Docker)
+## Implemetantion Guide
 
-### 1. Create virtual environment and install dependencies
+### 1. Clone and set up the environment
 
 ```bash
 cd ddm501-lab2-starter
 
+# Create virtual environment
 python -m venv venv
 source venv/bin/activate       # macOS / Linux
 # venv\Scripts\activate        # Windows
 
+# Install dependencies
 pip install -r requirements.txt
 ```
 
@@ -138,7 +157,7 @@ For convenience, helper scripts are provided for both Windows PowerShell (`run.p
 
 ---
 
-## Quick Start (Docker — recommended)
+## Implemetantion Guide (Docker — recommended)
 
 ### 1. Configure environment
 
@@ -195,7 +214,7 @@ Data Ingestion → Preprocessing → Training → Evaluation → Model Registry
 | Preprocessing | `pipeline/preprocessing.py` | Validate data quality, compute stats |
 | Training | `pipeline/training.py` | Train SVD/NMF/KNN, log to MLflow |
 | Evaluation | `pipeline/evaluation.py` | RMSE/MAE/MSE/MAPE, plots, report |
-| Registry | `pipeline/registry.py` | Find best run, register to Production |
+| Model Registry | `pipeline/registry.py` | Find best run, register to Production |
 
 ---
 
@@ -307,17 +326,19 @@ All tunable settings are in [`pipeline/config.py`](pipeline/config.py):
 
 ---
 
-## Submission Checklist
+## MLflow UI showing experiments
 
-- [x] Complete ML pipeline with modular stages
-- [x] MLflow tracking configured and running
-- [x] ≥ 5 experiments with different configurations logged
-- [x] Airflow DAG with full task graph and @weekly schedule
-- [x] Experiment comparison report (`experiment_report.md`)
-- [x] Best model registered to Production stage in Model Registry
-- [x] README with setup and usage instructions
-- [ ] Screenshots of MLflow UI showing experiment runs _(add before submitting)_
-- [ ] GitHub repository link submitted
+| MLflow UI | Image |
+|----------|---------|
+| Overview | ![Image](screenshots/01_experiments_overview.png) |
+| List | ![Image](screenshots/02_experiments_list.png)| 
+| Tuning Table | ![Image](screenshots/03_hyperparameter_tuning_table.png) |
+| Compare Run | ![Image](screenshots/04_compare_runs.png) |
+| Run Artifcats | ![Image](screenshots/05_run_artifacts.png) |
+| Movie Rating | ![Image](screenshots/06_movie_rating_table.png) |
+| Model Registry | ![Image](screenshots/07_model_registry.png) |
+| Model Versions | ![Image](screenshots/08_model_versions.png) |
+| Model Stage Production | ![Image](screenshots/09_model_stage_production.png) |
 
 ---
 

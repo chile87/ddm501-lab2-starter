@@ -5,7 +5,7 @@
 # `from pipeline...` imports would fail at parse time. Installing them in the
 # image (rather than via _PIP_ADDITIONAL_REQUIREMENTS at container start) keeps
 # scheduler restarts fast and the environment reproducible.
-FROM apache/airflow:2.8.0
+FROM apache/airflow:2.8.0-python3.10
 
 # scikit-surprise ships Cython sources and is compiled at install time, which
 # needs a toolchain that the slim Airflow image does not carry.
@@ -24,5 +24,5 @@ RUN pip install --no-cache-dir "setuptools<81" "numpy==1.24.4" \
     && pip install --no-cache-dir \
         "mlflow==2.9.2" \
         "scikit-surprise==1.1.3" \
-        "matplotlib==3.7.5" \
-        "pandas==2.0.3"
+        "matplotlib==3.8.2" \
+        "pandas==2.1.3"

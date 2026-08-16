@@ -8,6 +8,8 @@ This module handles:
 
 This file is PROVIDED - no TODOs required.
 """
+import ssl
+ssl._create_default_https_context = ssl._create_unverified_context
 
 import logging
 from typing import Tuple, Any

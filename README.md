@@ -104,6 +104,18 @@ mlflow server --backend-store-uri sqlite:///mlflow.db --default-artifact-root ./
 
 Open MLflow UI at **<http://localhost:5000>**
 
+> [!NOTE]
+> **Check Port Occupancy & Custom Port Configuration**:
+> On macOS, port `5000` is often occupied by **AirPlay Receiver** (`ControlCenter`). Check if port 5000 is in use: `lsof -i :5000`.
+> You can easily configure a custom port in [`pipeline/ports_config.py`](pipeline/ports_config.py) or set the `MLFLOW_PORT` / `MLFLOW_TRACKING_URI` environment variables:
+> ```bash
+> # Set custom port (e.g., 5001)
+> export MLFLOW_PORT=5001
+> export MLFLOW_TRACKING_URI=http://localhost:5001
+> MLFLOW_PORT=5001 make mlflow
+> ```
+> See [Service Ports & Configuration Guide](#service-ports--configuration-guide) below for details.
+
 ### 3. Run a single pipeline pass
 
 ```bash
@@ -309,13 +321,63 @@ pytest tests/ -v --cov=pipeline --cov-report=term-missing
 
 ---
 
+## Service Ports & Configuration Guide
+
+All service ports are centralized in [`pipeline/ports_config.py`](pipeline/ports_config.py) and configurable via environment variables or `.env`.
+
+### Configured Service Ports
+
+| Service | Port | Default URL | Config File / Env Var | Description |
+|---------|------|-------------|------------------------|-------------|
+| **MLflow Server** | `5000` | `http://localhost:5000` | `MLFLOW_PORT`, `MLFLOW_TRACKING_URI` | Tracking Server & Model Registry UI |
+| **Airflow Webserver** | `8080` | `http://localhost:8080` | `AIRFLOW_PORT`, `AIRFLOW_WEBSERVER_URL` | Apache Airflow Web UI (admin/admin) |
+| **PostgreSQL DB** | `5432` | `localhost:5432` | `POSTGRES_PORT` | Airflow Metadata Database (Docker) |
+
+---
+
+### How to Change Ports / Resolve Port Conflicts
+
+> ⚠️ **Common macOS Issue**: Port `5000` is often occupied by macOS **AirPlay Receiver** (`ControlCenter`).
+
+If port 5000 or 8080 is already in use on your machine, you can change the port using any of the methods below:
+
+#### Method 1: Environment Variables (Recommended)
+Set the environment variable before running the commands:
+
+```bash
+# Change MLflow port to 5001
+export MLFLOW_PORT=5001
+export MLFLOW_TRACKING_URI=http://localhost:5001
+
+# Start MLflow on custom port
+make mlflow
+
+# Run pipeline pointing to custom port
+python -m pipeline.run_pipeline
+```
+
+#### Method 2: Via Makefile
+Pass `MLFLOW_PORT` directly to `make`:
+
+```bash
+MLFLOW_PORT=5001 make mlflow
+```
+
+#### Method 3: Disable macOS AirPlay Receiver (To free port 5000)
+1. Go to **System Settings** → **General** → **AirDrop & Handoff**.
+2. Turn **AirPlay Receiver** to **Off**.
+
+---
+
 ## Configuration Reference
 
-All tunable settings are in [`pipeline/config.py`](pipeline/config.py):
+All tunable settings are in [`pipeline/config.py`](pipeline/config.py) and [`pipeline/ports_config.py`](pipeline/ports_config.py):
 
 | Variable | Default | Description |
 |----------|---------|-------------|
+| `MLFLOW_PORT` | `5000` | Port for MLflow Tracking Server |
 | `MLFLOW_TRACKING_URI` | `http://localhost:5000` | MLflow server URL |
+| `AIRFLOW_PORT` | `8080` | Port for Airflow Webserver |
 | `MLFLOW_EXPERIMENT_NAME` | `movie-rating-prediction` | Main experiment name |
 | `DATASET_NAME` | `ml-100k` | Surprise built-in dataset |
 | `TEST_SIZE` | `0.2` | Train/test split ratio |

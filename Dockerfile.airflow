@@ -19,9 +19,10 @@ USER airflow
 
 # numpy must be present *before* scikit-surprise builds against it, and
 # setuptools must stay < 81 because surprise still imports pkg_resources.
-RUN pip install --no-cache-dir "setuptools<81" "numpy==1.26.2" \
+# Airflow 2.8.0 image uses Python 3.8, so keep pins in a Python 3.8-compatible range.
+RUN pip install --no-cache-dir "setuptools<81" "numpy==1.24.4" \
     && pip install --no-cache-dir \
         "mlflow==2.9.2" \
         "scikit-surprise==1.1.3" \
-        "matplotlib==3.8.2" \
-        "pandas==2.1.3"
+        "matplotlib==3.7.5" \
+        "pandas==2.0.3"

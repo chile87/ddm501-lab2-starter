@@ -326,19 +326,34 @@ All tunable settings are in [`pipeline/config.py`](pipeline/config.py):
 
 ---
 
-## MLflow UI showing experiments
+## Experiment Results & MLflow UI Visualizations
 
-| MLflow UI | Image |
-|----------|---------|
-| Overview | ![Image](screenshots/01_experiments_overview.png) |
-| List | ![Image](screenshots/02_experiments_list.png)| 
-| Tuning Table | ![Image](screenshots/03_hyperparameter_tuning_table.png) |
-| Compare Run | ![Image](screenshots/04_compare_runs.png) |
-| Run Artifcats | ![Image](screenshots/05_run_artifacts.png) |
-| Movie Rating | ![Image](screenshots/06_movie_rating_table.png) |
-| Model Registry | ![Image](screenshots/07_model_registry.png) |
-| Model Versions | ![Image](screenshots/08_model_versions.png) |
-| Model Stage Production | ![Image](screenshots/09_model_stage_production.png) |
+Below are the visual results and screenshots captured from the MLflow UI demonstrating experiment tracking, hyperparameter sweeps, artifact logging, and model registry promotion.
+
+### 1. Experiments Overview & List
+| Experiment View | Description | Screenshot |
+|-----------------|-------------|------------|
+| **Overview** | Overview of all logged experiments and runs in MLflow | ![Experiments Overview](screenshots/01_experiments_overview.png) |
+| **Runs List** | Comprehensive list of 9 hyperparameter tuning runs | ![Experiments List](screenshots/02_experiments_list.png) |
+
+---
+
+### 2. Hyperparameter Tuning & Run Comparison
+| Analysis View | Description | Screenshot |
+|---------------|-------------|------------|
+| **Tuning Table** | Detailed hyperparameter metrics table (RMSE, MAE, execution time) | ![Hyperparameter Tuning Table](screenshots/03_hyperparameter_tuning_table.png) |
+| **Run Comparison** | Visual comparison charts across SVD, NMF, and KNN models | ![Compare Runs](screenshots/04_compare_runs.png) |
+| **Run Artifacts** | Logged model pickles, pyfunc wrappers, and plot figures | ![Run Artifacts](screenshots/05_run_artifacts.png) |
+| **Movie Rating Metrics** | Detailed evaluation metrics table across models | ![Movie Rating Table](screenshots/06_movie_rating_table.png) |
+
+---
+
+### 3. Model Registry & Production Deployment
+| Registry Stage | Description | Screenshot |
+|----------------|-------------|------------|
+| **Model Registry** | MLflow Model Registry containing `movie-rating-model` | ![Model Registry](screenshots/07_model_registry.png) |
+| **Model Versions** | Logged model versions and stage transition history | ![Model Versions](screenshots/08_model_versions.png) |
+| **Production Stage** | Best SVD model promoted to **Production** stage | ![Model Stage Production](screenshots/09_model_stage_production.png) |
 
 ---
 

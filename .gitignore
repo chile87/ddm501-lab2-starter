@@ -108,3 +108,5 @@ tmp/
 temp/
 .cache/
 *.log
+
+.DS_Store
